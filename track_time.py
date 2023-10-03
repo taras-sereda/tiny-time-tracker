@@ -1,10 +1,35 @@
 import argparse
 import datetime
+from dataclasses import dataclass, field
 from pathlib import Path
 from pprint import pprint
 
+import orjson
+
 DATA_DIR = Path("./user-data")
 DATA_DIR.mkdir(exist_ok=True)
+
+
+@dataclass
+class Entry:
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+    duration: float = field(init=False)
+    client: str
+    task: str
+
+    def __post_init__(self):
+        duration = self.end_time - self.start_time
+        self.duration = duration.total_seconds()
+
+
+def append_to_file(f_name, data):
+    with open(f_name, "ab") as f:
+        entry = orjson.dumps(
+            data, option=orjson.OPT_OMIT_MICROSECONDS | orjson.OPT_APPEND_NEWLINE
+        )
+        print(entry.decode("utf-8"))
+        f.write(entry)
 
 
 def main(f_name, **kwargs):
@@ -15,39 +40,37 @@ def main(f_name, **kwargs):
     except KeyboardInterrupt as e:
         end_time = datetime.datetime.now()
 
-        data = {
-            "start_time": str(start_time),
-            "end_time": str(end_time),
-            "duration": str(end_time - start_time),
-            "task": kwargs.get("task"),
-        }
-        pprint(data)
-        with open(f_name, "a") as f:
-            f.write(str(data) + "\n")
+        entry = Entry(
+            start_time=start_time,
+            end_time=end_time,
+            client=kwargs.get("client"),
+            task=kwargs.get("task"),
+        )
+        append_to_file(f_name, entry)
 
 
 def manual(f_name, **kwargs):
     assert kwargs["duration"] is not None
-    assert type(kwargs["duration"]) is int
 
     start_time = datetime.datetime.now()
     end_time = start_time + datetime.timedelta(hours=kwargs["duration"])
-    data = {
-        "start_time": str(start_time),
-        "end_time": str(end_time),
-        "duration": str(end_time - start_time),
-        "task": kwargs.get("task"),
-    }
 
-    pprint(data)
-    with open(f_name, "a") as f:
-        f.write(str(data) + "\n")
+    entry = Entry(
+        start_time=start_time,
+        end_time=end_time,
+        client=kwargs.get("client"),
+        task=kwargs.get("task"),
+    )
+    append_to_file(f_name, entry)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("task", nargs="?", default="poly-ai", type=str)
-    parser.add_argument("--duration", type=int)
+    parser.add_argument("client", nargs="?", default="poly", type=str)
+    parser.add_argument("task", nargs="?", default="tts", type=str)
+    parser.add_argument(
+        "--duration", type=float, help="duration in hours. Fractionals are accepted"
+    )
     args = parser.parse_args()
 
     month = datetime.date.today().strftime("%m-%Y")
