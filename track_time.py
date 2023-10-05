@@ -22,13 +22,16 @@ class Entry:
         duration = self.end_time - self.start_time
         self.duration = duration.total_seconds()
 
+    def __repr__(self):
+        return f'task: {self.task}, time spent: {self.duration/60/60:.3f} hours'
+
 
 def append_to_file(f_name, data):
     with open(f_name, "ab") as f:
+        print(data)
         entry = orjson.dumps(
             data, option=orjson.OPT_OMIT_MICROSECONDS | orjson.OPT_APPEND_NEWLINE
         )
-        print(entry.decode("utf-8"))
         f.write(entry)
 
 
@@ -66,7 +69,7 @@ def manual(f_name, **kwargs):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("client", nargs="?", default="poly", type=str)
+    parser.add_argument("client", nargs="?", default="research", type=str)
     parser.add_argument("task", nargs="?", default="tts", type=str)
     parser.add_argument(
         "--duration", type=float, help="duration in hours. Fractionals are accepted"
