@@ -23,7 +23,7 @@ class Entry:
         self.duration = duration.total_seconds()
 
     def __repr__(self):
-        return f'task: {self.task}, time spent: {self.duration/60/60:.3f} hours'
+        return f"task: {self.task}, time spent: {self.duration/60/60:.3f} hours"
 
 
 def append_to_file(f_name, data):
@@ -54,8 +54,10 @@ def main(f_name, **kwargs):
 
 def manual(f_name, **kwargs):
     assert kwargs["duration"] is not None
-
-    start_time = datetime.datetime.now()
+    if (date_str := kwargs.get("date")) is not None:
+        start_time = datetime.datetime.strptime(date_str, "%d-%m-%Y")
+    else:
+        start_time = datetime.datetime.now()
     end_time = start_time + datetime.timedelta(hours=kwargs["duration"])
 
     entry = Entry(
@@ -72,16 +74,25 @@ if __name__ == "__main__":
     parser.add_argument("client", nargs="?", default="research", type=str)
     parser.add_argument("task", nargs="?", default="tts", type=str)
     parser.add_argument(
+        "--date", type=str, help="date of activity. Example: 07-10-2023"
+    )
+    parser.add_argument(
         "--duration", type=float, help="duration in hours. Fractionals are accepted"
     )
     args = parser.parse_args()
 
-    month = datetime.date.today().strftime("%m-%Y")
-    month_dir = DATA_DIR / month
+    if args.date is not None:
+        date = datetime.datetime.strptime(args.date, "%d-%m-%Y")
+    else:
+        date = datetime.date.today()
+
+    date_str = date.strftime("%d-%m-%Y")
+    month_str = date.strftime("%m-%Y")
+
+    month_dir = DATA_DIR / month_str
     month_dir.mkdir(exist_ok=True)
 
-    date = datetime.date.today().strftime("%d-%m-%Y")
-    f_name = month_dir / f"{date}.txt"
+    f_name = month_dir / f"{date_str}.txt"
 
     if args.duration is not None:
         print("Adding task in a manual mode")
