@@ -9,7 +9,6 @@ import orjson
 DATA_DIR = Path("./user-data")
 DATA_DIR.mkdir(exist_ok=True)
 
-
 @dataclass
 class Entry:
     start_time: datetime.datetime
